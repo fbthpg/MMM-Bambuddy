@@ -1,0 +1,57 @@
+.bambuddy-wrapper {
+	font-family: inherit;
+}
+
+.bambuddy-table {
+	border-collapse: collapse;
+}
+
+.bambuddy-table td {
+	padding: 2px 12px 2px 0;
+	vertical-align: middle;
+}
+
+.bambuddy-name {
+	font-weight: 500;
+}
+
+.bambuddy-status {
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	font-size: 0.8em;
+}
+
+.bambuddy-progress {
+	text-align: right;
+	min-width: 3em;
+}
+
+.bam-online .bambuddy-status {
+	color: #8bc34a;
+}
+
+.bam-printing .bambuddy-status {
+	color: #29b6f6;
+}
+
+.bam-offline .bambuddy-status {
+	color: #777;
+}
+
+.bam-error .bambuddy-status {
+	color: #ef5350;
+}
+
+.bambuddy-error-row td {
+	padding-bottom: 10px;
+}
+
+.bambuddy-error-text {
+	margin-bottom: 6px;
+}
+
+.bambuddy-snapshot {
+	max-width: 220px;
+	border-radius: 4px;
+	display: block;
+}
