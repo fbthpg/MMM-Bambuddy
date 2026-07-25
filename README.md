@@ -19,7 +19,7 @@ This module depends on the [Bambuddy REST API](https://wiki.bambuddy.cool/refere
 
 ```sh
 cd ~/MagicMirror/modules
-git clone https://github.com/yourname/MMM-Bambuddy.git
+git clone https://github.com/fbthpg/MMM-Bambuddy.git
 cd MMM-Bambuddy
 ```
 
@@ -34,7 +34,7 @@ Add to `config/config.js`:
 	module: "MMM-Bambuddy",
 	position: "top_right",
 	config: {
-		apiBase: "http://192.168.1.50:8000/api/v1", // your Bambuddy server
+		apiBase: "http://192.168.1.X:8000/api/v1", // your Bambuddy server
 		apiKey: "your-api-key-here",                 // leave "" if auth disabled
 		updateInterval: 15 * 1000,                    // poll every 15s
 		showOfflinePrinters: true
