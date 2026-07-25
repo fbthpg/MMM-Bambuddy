@@ -65,7 +65,7 @@ Module.register("MMM-Bambuddy", {
 
 		let printers = this.printers;
 		if (!this.config.showOfflinePrinters) {
-			printers = printers.filter((p) => p.state !== "offline");
+			printers = printers.filter((p) => p.uiState !== "offline");
 		}
 
 		if (printers.length === 0) {
@@ -80,7 +80,7 @@ Module.register("MMM-Bambuddy", {
 		printers.forEach((printer) => {
 			table.appendChild(this.createPrinterRow(printer));
 
-			if (printer.state === "error") {
+			if (printer.uiState === "error") {
 				table.appendChild(this.createErrorDetailRow(printer));
 			}
 		});
@@ -90,7 +90,7 @@ Module.register("MMM-Bambuddy", {
 	},
 
 	createPrinterRow: function (printer) {
-		const meta = this.stateMeta[printer.state] || this.stateMeta.offline;
+		const meta = this.stateMeta[printer.uiState] || this.stateMeta.offline;
 
 		const row = document.createElement("tr");
 		row.className = `bambuddy-row ${meta.className}`;
@@ -107,7 +107,7 @@ Module.register("MMM-Bambuddy", {
 
 		const progressCell = document.createElement("td");
 		progressCell.className = "bambuddy-progress";
-		if (printer.state === "printing" && typeof printer.progress === "number") {
+		if (printer.uiState === "printing" && typeof printer.progress === "number") {
 			progressCell.innerHTML = `${Math.round(printer.progress)}%`;
 		} else {
 			progressCell.innerHTML = "&nbsp;";

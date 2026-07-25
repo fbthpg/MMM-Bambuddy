@@ -57,9 +57,11 @@ module.exports = NodeHelper.create({
 
 	// Fetch the printer list, then enrich each entry with per-printer
 	// status (progress / HMS) and, if a printer is erroring, a snapshot.
+	// NOTE: the trailing slash on /printers/ matches this Bambuddy
+	// version's OpenAPI route (list_printers_api_v1_printers__get).
 	fetchAll: async function () {
 		try {
-			const printers = await this.fetchJson("/printers");
+			const printers = await this.fetchJson("/printers/");
 
 			const enriched = await Promise.all(
 				printers.map((p) => this.enrichPrinter(p))
@@ -80,54 +82,77 @@ module.exports = NodeHelper.create({
 		const result = {
 			id: printer.id,
 			name: printer.name,
-			rawStatus: printer.status || "unknown",
+			connected: false,
+			state: null, // raw PrinterStatus.state string, e.g. RUNNING/IDLE/FAILED
 			progress: null,
 			hmsErrors: [],
 			snapshotUrl: null
 		};
 
-		// Pull live status (progress + HMS) when we have an id to query.
+		// Pull live status (connected/state/progress/hms_errors).
+		// PrinterStatus.hms_errors is a list of HMSErrorResponse objects
+		// ({code, module, severity, ...}), not a single string field.
 		try {
 			const status = await this.fetchJson(`/printers/${printer.id}/status`);
+			result.connected = !!status.connected;
+			result.state = status.state || null;
 			if (typeof status.progress === "number") {
 				result.progress = status.progress;
 			}
-			if (status.hms_status && status.hms_status !== "ok") {
-				result.hmsErrors.push(status.hms_status);
+			if (Array.isArray(status.hms_errors)) {
+				result.hmsErrors = status.hms_errors.map((e) => e.code || e.full_code || "Unknown HMS error");
 			}
 		} catch (err) {
-			// Status endpoint failing doesn't necessarily mean the printer
-			// itself errored — the printer/offline state below still applies.
+			// Status endpoint failing (printer unreachable, etc.) — fall
+			// through to classifyState(), which treats this as offline.
 		}
 
-		result.state = this.classifyState(printer, result);
+		result.uiState = this.classifyState(result);
 
 		// On error, grab a snapshot so the mirror can show what's on the plate.
-		if (result.state === "error") {
+		if (result.uiState === "error") {
 			result.snapshotUrl = `${this.name}/snapshot/${printer.id}?t=${Date.now()}`;
 		}
 
 		return result;
 	},
 
-	// Normalizes whatever the API reports into one of:
+	// Normalizes the real PrinterStatus fields into one of:
 	// online | offline | printing | error
-	classifyState: function (printer, enriched) {
-		const raw = (printer.status || "").toLowerCase();
-
-		if (enriched.hmsErrors.length > 0 || raw.includes("error") || raw.includes("fail")) {
+	classifyState: function (enriched) {
+		if (enriched.hmsErrors.length > 0) {
 			return "error";
 		}
-		if (raw.includes("offline") || raw.includes("disconnected")) {
+		if (!enriched.connected) {
 			return "offline";
 		}
-		if (raw.includes("print") || raw.includes("running") || (enriched.progress !== null && enriched.progress > 0 && enriched.progress < 100)) {
+
+		const state = (enriched.state || "").toUpperCase();
+		if (state === "FAILED") {
+			return "error";
+		}
+		if (state === "RUNNING" || state === "PAUSE" || state === "PREPARE") {
 			return "printing";
 		}
-		if (raw.includes("idle") || raw.includes("online") || raw.includes("finish")) {
-			return "online";
+		// IDLE, FINISH, or unknown-but-connected -> online.
+		return "online";
+	},
+
+	// Mint a short-lived (60 min) camera stream token via the API-key
+	// authenticated endpoint. Snapshot/stream routes don't accept
+	// X-API-Key directly (they're built for <img>/<video> tags, which
+	// can't send custom headers) — they take ?token=... instead.
+	getStreamToken: async function () {
+		const url = this.apiUrl("/printers/camera/stream-token");
+		const res = await fetch(url, {
+			method: "POST",
+			headers: this.authHeaders()
+		});
+		if (!res.ok) {
+			throw new Error(`stream-token -> HTTP ${res.status}`);
 		}
-		return "offline";
+		const data = await res.json();
+		return data.token;
 	},
 
 	// Proxies a camera snapshot through this node_helper so the front-end
@@ -140,8 +165,9 @@ module.exports = NodeHelper.create({
 				return;
 			}
 			try {
-				const url = this.apiUrl(`/printers/${req.params.id}/camera/snapshot`);
-				const upstream = await fetch(url, { headers: this.authHeaders() });
+				const token = await this.getStreamToken();
+				const url = this.apiUrl(`/printers/${req.params.id}/camera/snapshot?token=${encodeURIComponent(token)}`);
+				const upstream = await fetch(url);
 				if (!upstream.ok) {
 					res.status(upstream.status).send("Snapshot unavailable");
 					return;
@@ -150,7 +176,7 @@ module.exports = NodeHelper.create({
 				const buffer = Buffer.from(await upstream.arrayBuffer());
 				res.send(buffer);
 			} catch (err) {
-				res.status(502).send("Snapshot fetch failed");
+				res.status(502).send("Snapshot fetch failed: " + (err.message || err));
 			}
 		});
 	}

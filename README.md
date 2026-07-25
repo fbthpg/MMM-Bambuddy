@@ -19,7 +19,7 @@ This module depends on the [Bambuddy REST API](https://wiki.bambuddy.cool/refere
 
 ```sh
 cd ~/MagicMirror/modules
-git clone https://github.com/fbthpg/MMM-Bambuddy.git
+git clone https://github.com/yourname/MMM-Bambuddy.git
 cd MMM-Bambuddy
 ```
 
@@ -34,7 +34,7 @@ Add to `config/config.js`:
 	module: "MMM-Bambuddy",
 	position: "top_right",
 	config: {
-		apiBase: "http://192.168.1.X:8000/api/v1", // your Bambuddy server
+		apiBase: "http://192.168.1.50:8000/api/v1", // your Bambuddy server
 		apiKey: "your-api-key-here",                 // leave "" if auth disabled
 		updateInterval: 15 * 1000,                    // poll every 15s
 		showOfflinePrinters: true
@@ -53,13 +53,14 @@ Add to `config/config.js`:
 
 ## Getting an API key
 
-See [Bambuddy: API Keys & Webhooks](https://wiki.bambuddy.cool/features/api-keys/). Go to **Settings → API Keys → Create API Key**, and select at minimum the **Read Status** permission. If you want error snapshots to render, the key also needs camera/snapshot access.
+In Bambuddy, go to **Settings → API Keys → Create API Key** and enable at minimum **Read Status** (`can_read_status`). This single permission covers both the printer list/status endpoints and minting the short-lived camera token used for error snapshots — no separate camera scope is needed.
 
 ## Notes
 
-- All requests to Bambuddy (including the API key) are made from the `node_helper.js`, server-side — your API key is never exposed to the browser.
-- Camera snapshots are proxied through the module's own Express route (`/MMM-Bambuddy/snapshot/:id`) for the same reason.
-- Status is normalized from Bambuddy's raw `status` field and `hms_status` into one of `online / printing / offline / error`. If your Bambuddy version reports different status strings, you may need to tweak `classifyState()` in `node_helper.js`.
+- All requests to Bambuddy (including the API key) are made from `node_helper.js`, server-side — your API key is never exposed to the browser.
+- Camera snapshots require a short-lived token rather than the API key directly (Bambuddy's snapshot/stream routes are built for `<img>`/`<video>` tags, which can't send custom headers). The module mints one automatically via `POST /printers/camera/stream-token` and proxies the image through its own Express route (`/MMM-Bambuddy/snapshot/:id`), so the browser never sees either the API key or the token.
+- Status is derived from the real `GET /printers/{id}/status` response: `connected` (bool), `state` (`IDLE` / `RUNNING` / `PAUSE` / `PREPARE` / `FINISH` / `FAILED` / etc.), and `hms_errors` (a list of error objects, not a single string). These are normalized into `online / printing / offline / error` in `classifyState()` inside `node_helper.js` — tweak that function if your printer reports a state string not covered here.
+- Verified against Bambuddy **v0.2.4.9**'s OpenAPI schema. Endpoint paths and response shapes can change between versions; if something breaks after an update, check `http://your-server:PORT/openapi.json` for the current schema.
 
 ## License
 
