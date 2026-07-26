@@ -138,8 +138,17 @@ Module.register("MMM-Bambuddy", {
 			img.className = "bambuddy-snapshot";
 			img.src = printer.snapshotUrl;
 			img.alt = `${printer.name} camera snapshot`;
+			// If Bambuddy can't produce a snapshot (camera off, printer
+			// unreachable, etc.) it returns a non-image error response.
+			// Rather than showing a broken-image icon, just remove the
+			// element so the row falls back to text-only.
+			img.onerror = function () {
+				if (img.parentNode) {
+					img.parentNode.removeChild(img);
+				}
+			};
 			cell.appendChild(img);
-		}
+}
 
 		row.appendChild(cell);
 		return row;

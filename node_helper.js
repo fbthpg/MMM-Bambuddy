@@ -21,6 +21,7 @@ module.exports = NodeHelper.create({
 
 	socketNotificationReceived: function (notification, payload) {
 		if (notification === "BAMBUDDY_CONFIG") {
+			console.log("[MMM-Bambuddy] Received config:", JSON.stringify(payload));
 			this.config = payload;
 
 			if (this.pollTimer) {
