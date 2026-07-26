@@ -35,17 +35,18 @@ Module.register("MMM-Bambuddy", {
 		return [this.file("MMM-Bambuddy.css")];
 	},
 
-	socketNotificationReceived: function (notification, payload) {
-		if (notification === "BAMBUDDY_DATA") {
-			this.printers = payload.printers;
-			this.loaded = true;
-			this.errorMessage = null;
-			this.updateDom(this.config.animationSpeed);
-		} else if (notification === "BAMBUDDY_ERROR") {
-			this.errorMessage = payload.message;
-			this.updateDom(this.config.animationSpeed);
-		}
-	},
+    socketNotificationReceived: function (notification, payload) {
+        if (notification === "BAMBUDDY_DATA") {
+            this.printers = payload.printers;
+            this.loaded = true;
+            this.errorMessage = null;
+            this.updateDom(this.config.animationSpeed);
+        } else if (notification === "BAMBUDDY_ERROR") {
+            this.errorMessage = payload.message;
+            this.loaded = true;
+            this.updateDom(this.config.animationSpeed);
+        }
+    },
 
 	getDom: function () {
 		const wrapper = document.createElement("div");
