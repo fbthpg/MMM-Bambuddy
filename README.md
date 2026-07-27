@@ -2,7 +2,8 @@
 
 A minimal [MagicMirror²](https://magicmirror.builders/) module showing your 3D printer fleet from [Bambuddy](https://wiki.bambuddy.cool/).
 
-![screenshot placeholder](screenshot.png)
+I made this because I didn't like any of the other Bambu plugins for MMM.  Feel free to steal it - it's just hitting someone else's API and showing the response.
+It requires Bambuddy.  If you're not using Bambuddy, you can't use it.
 
 For each printer, shows:
 
@@ -61,7 +62,3 @@ In Bambuddy, go to **Settings → API Keys → Create API Key** and enable at mi
 - Camera snapshots require a short-lived token rather than the API key directly (Bambuddy's snapshot/stream routes are built for `<img>`/`<video>` tags, which can't send custom headers). The module mints one automatically via `POST /printers/camera/stream-token` and proxies the image through its own Express route (`/MMM-Bambuddy/snapshot/:id`), so the browser never sees either the API key or the token.
 - Status is derived from the real `GET /printers/{id}/status` response: `connected` (bool), `state` (`IDLE` / `RUNNING` / `PAUSE` / `PREPARE` / `FINISH` / `FAILED` / etc.), and `hms_errors` (a list of error objects, not a single string). These are normalized into `online / printing / offline / error` in `classifyState()` inside `node_helper.js` — tweak that function if your printer reports a state string not covered here.
 - Verified against Bambuddy **v0.2.4.9**'s OpenAPI schema. Endpoint paths and response shapes can change between versions; if something breaks after an update, check `http://your-server:PORT/openapi.json` for the current schema.
-
-## License
-
-MIT
