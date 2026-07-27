@@ -3,7 +3,7 @@
 A minimal [MagicMirror²](https://magicmirror.builders/) module showing your 3D printer fleet from [Bambuddy](https://wiki.bambuddy.cool/).
 
 I made this because I didn't like any of the other Bambu plugins for MMM.  Feel free to steal it - it's just hitting someone else's API and showing the response.
-It requires Bambuddy.  If you're not using Bambuddy, you can't use it.
+It requires Bambuddy.  If you're not using Bambuddy, you can't use it.  Seems to work as long as you have the printer in Bambuddy, so it can be LAN or cloud.
 
 For each printer, shows:
 
