@@ -20,7 +20,7 @@ This module depends on the [Bambuddy REST API](https://wiki.bambuddy.cool/refere
 
 ```sh
 cd ~/MagicMirror/modules
-git clone https://github.com/yourname/MMM-Bambuddy.git
+git clone https://github.com/fbthpg/MMM-Bambuddy.git
 cd MMM-Bambuddy
 ```
 
